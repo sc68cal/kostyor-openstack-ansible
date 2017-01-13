@@ -69,4 +69,13 @@ class Driver(base.Driver):
         # Figure out if this host has the nova-compute service running
         services_on_host = dbapi.get_services_by_host(host['id'])
         if 'nova-compute' in map(lambda x: x['name'], services_on_host):
+            # Step 1 - fence off the compute node
+            # i.e. Disable service record in Nova database for the node
+            # TODO(sc68cal) Figure out if this needs to be an RPC call back
+            # to the Kostyor service
+            self.disable_compute_service_record_for_host(host)
+
+            # TODO(sc68cal) Figure out if this needs to be an RPC call back
+            # to the Kostyor service
+            # Final step - migrate instances off that are on the machine
             self.host_live_evacuate_nova_compute_node(host)
