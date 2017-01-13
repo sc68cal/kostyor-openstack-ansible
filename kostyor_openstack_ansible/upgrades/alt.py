@@ -20,6 +20,9 @@ from ansible.vars import VariableManager
 from kostyor.rpc import tasks
 from kostyor.rpc.app import app
 
+# TODO(sc68cal) figure out if this is actually viable
+from kostyor.db import api as dbapi
+
 from . import base
 
 
@@ -59,3 +62,11 @@ class Driver(base.Driver):
 
     _run_playbook = _run_playbook
     _run_playbook_for = _run_playbook_for
+
+    def pre_host_upgrade_hook(self, upgrade_task, host):
+        # Catch nova-compute upgrades and pass off to a separate handler
+
+        # Figure out if this host has the nova-compute service running
+        services_on_host = dbapi.get_services_by_host(host['id'])
+        if 'nova-compute' in map(lambda x: x['name'], services_on_host):
+            self.host_live_evacuate_nova_compute_node(host)
